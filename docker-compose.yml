@@ -119,6 +119,6 @@ services:
             - "18080:8080"
             - "18404:8404"
         volumes:
-            - './haproxy:/usr/local/etc/haproxy:ro'
+            - './:/usr/local/etc/haproxy:ro'
         networks:
             -  jahia-net
