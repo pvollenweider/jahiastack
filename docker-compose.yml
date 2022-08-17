@@ -1,124 +1,112 @@
-version: '2.4'
-
-networks:
-    jahia-net:
-        name: jahia-net
-        ipam:
-            config:
-                - subnet: 172.24.24.0/24
+---
+version: "3.9"
 
 services:
-    mariadb:
-        image: library/mariadb:10-focal
-        container_name: mariadb
-        mem_limit: 2gb
-        networks:
-            - jahia-net
-        command: --max_allowed_packet=134217728 --transaction-isolation=READ-UNCOMMITTED --innodb-lock-wait-timeout=10
-        environment:
-            MYSQL_ROOT_PASSWORD: root1234
-            MYSQL_DATABASE: jahia
-            MYSQL_USER: jahia
-            MYSQL_PASSWORD: jahia
-        volumes:
-            - ./data/mysql:/var/lib/mysql
+  mariadb:
+    image: library/mariadb:10-focal
+    container_name: mariadb
+    command: --max_allowed_packet=134217728 --transaction-isolation=READ-UNCOMMITTED --innodb-lock-wait-timeout=10
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: jahia
+      MYSQL_USER: jahia
+      MYSQL_PASSWORD: jahia
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    networks:
+      - jahia-net
 
-    elasticsearch:
-        image: 'docker.elastic.co/elasticsearch/elasticsearch:7.10.2'
-        environment:
-            - discovery.type=single-node
-        container_name: elasticsearch
-        mem_limit: 3gb
-        ports:
-            - 9200:9200
-        ulimits:
-            memlock:
-                soft: -1
-                hard: -1
-        networks:
-            - jahia-net
-        volumes:
-            - ./data/elasticsearch:/usr/share/elasticsearch/data
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.10.2
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+    environment:
+      discovery.type: single-node
+    volumes:
+      - ./data/elasticsearch:/usr/share/elasticsearch/data
+    networks:
+      - jahia-net
 
-    jcustomer:
-        image: 'jahia/jcustomer:1.6.0'
-        hostname: jcustomer.jahia.net
-        container_name: jcustomer
-        networks:
-          jahia-net:
-            ipv4_address: 172.24.24.100
-        depends_on:
-            - elasticsearch
-        environment:
-            unomi_env_var_UNOMI_ELASTICSEARCH_ADDRESSES: elasticsearch:9200
-            unomi_env_var_UNOMI_ELASTICSEARCH_CLUSTERNAME: docker-cluster
-            unomi_env_var_UNOMI_CLUSTER_INTERNAL_ADDRESS: https://jcustomer.jahia.net:9443
-            unomi_env_var_JAVA_MAX_MEM: 2G
-            unomi_env_var_UNOMI_ROOT_PASSWORD: jcustomerP@55
-            unomi_env_var_UNOMI_HAZELCAST_TCPIP_MEMBERS: 172.24.24.100-102
-            unomi_env_var_UNOMI_THIRDPARTY_PROVIDER1_KEY: 670c26d1cc413346c3b2fd9ce65dab41
-            unomi_env_var_UNOMI_THIRDPARTY_PROVIDER1_IPADDRESSES: 172.24.24.0/24,::1,127.0.0.1
-            unomi_env_var_KARAF_OPTS: "-Dunomi.autoStart=true"
-            unomi_env_var_UNOMI_CLUSTER_PUBLIC_ADDRESS: http://jcustomer.jahia.net:8181
-            KARAF_OPTS: "-Dunomi.autoStart=true"
-
-            UNOMI_ELASTICSEARCH_ADDRESSES: elasticsearch:9200
-            UNOMI_ELASTICSEARCH_CLUSTERNAME: docker-cluster
-            UNOMI_CLUSTER_INTERNAL_ADDRESS: https://jcustomer.jahia.net:9443
-            UNOMI_ROOT_PASSWORD: jcustomerP@55
-            UNOMI_HAZELCAST_TCPIP_MEMBERS: 172.24.24.100-102
-            UNOMI_THIRDPARTY_PROVIDER1_KEY: 670c26d1cc413346c3b2fd9ce65dab41
-            UNOMI_THIRDPARTY_PROVIDER1_IPADDRESSES: 172.24.24.0/24,::1,127.0.0.1
-            MAXMIND_KEY: hYZIvpxdi8Ea647J
-            UNOMI_CLUSTER_PUBLIC_ADDRESS: http://jcustomer.jahia.net:8181
-            JAVA_MAX_MEM: 2G
-        ports:
-            - 8181:8181
-            - 9443:9443
-            - 5005:5005
-            - 8102:8102
-    jahia:
-        image: 'jahia/jahia-ee:8.1.2.1'
-        hostname: 'jahia.jahia.net'
-        container_name: jahia
-        restart: 'no'
-        mem_limit: 3gb
-        networks:
-          jahia-net:
-            ipv4_address: 172.24.24.50
-        depends_on:
-            - mariadb
-        ports:
-            - 8080:8080
-            - 8101:8101
-            - 8000:8000
-        extra_hosts:
-            - jahia:127.0.0.1
-        environment:
-            jahia_cfg_karaf_remoteShellHost: 0.0.0.0
-            DB_VENDOR: mariadb
-            DB_HOST: mariadb
-            DB_NAME: jahia
-            DB_USER: jahia
-            DB_PASS: jahia
-            MAX_RAM_PERCENTAGE: 95
-            SUPER_USER_PASSWORD: root1234
-            PROCESSING_SERVER: 'true'
-            EXECUTE_PROVISIONING_SCRIPT: file:///tmp/provisioning.yaml
-        volumes:
-            - ./data/jahia:/var/jahia
-            - ./site1.zip:/tmp/site1.zip
-            - ./provisioning.yaml:/tmp/provisioning.yaml
+  jcustomer:
+    image: jahia/jcustomer:1.6.0
+    container_name: jcustomer
+    hostname: jcustomer.jahia.net    
+    ports:
+      - "8181:8181"
+      - "9443:9443"
+      - "5005:5005"
+      - "8102:8102"
+    depends_on:
+      - elasticsearch
+    environment:
+      unomi_env_var_UNOMI_ELASTICSEARCH_ADDRESSES: elasticsearch:9200
+      unomi_env_var_UNOMI_ELASTICSEARCH_CLUSTERNAME: docker-cluster
+      unomi_env_var_UNOMI_CLUSTER_INTERNAL_ADDRESS: https://jcustomer.jahia.net:9443
+      unomi_env_var_JAVA_MAX_MEM: 2G
+      unomi_env_var_UNOMI_ROOT_PASSWORD: jcustomerP@55
+      unomi_env_var_UNOMI_HAZELCAST_TCPIP_MEMBERS: 172.24.24.100-102
+      unomi_env_var_UNOMI_THIRDPARTY_PROVIDER1_KEY: 670c26d1cc413346c3b2fd9ce65dab41
+      unomi_env_var_UNOMI_THIRDPARTY_PROVIDER1_IPADDRESSES: 172.24.24.0/24,::1,127.0.0.1
+      unomi_env_var_KARAF_OPTS: -Dunomi.autoStart=true
+      unomi_env_var_UNOMI_CLUSTER_PUBLIC_ADDRESS: http://jcustomer.jahia.net:8181
+      KARAF_OPTS: -Dunomi.autoStart=true
+      UNOMI_ELASTICSEARCH_ADDRESSES: elasticsearch:9200
+      UNOMI_ELASTICSEARCH_CLUSTERNAME: docker-cluster
+      UNOMI_CLUSTER_INTERNAL_ADDRESS: https://jcustomer.jahia.net:9443
+      UNOMI_ROOT_PASSWORD: jcustomerP@55
+      UNOMI_HAZELCAST_TCPIP_MEMBERS: 172.24.24.100-102
+      UNOMI_THIRDPARTY_PROVIDER1_KEY: 670c26d1cc413346c3b2fd9ce65dab41
+      UNOMI_THIRDPARTY_PROVIDER1_IPADDRESSES: 172.24.24.0/24,::1,127.0.0.1
+      MAXMIND_KEY: hYZIvpxdi8Ea647J
+      UNOMI_CLUSTER_PUBLIC_ADDRESS: http://jcustomer.jahia.net:8181
+      JAVA_MAX_MEM: 2G
+    networks:
+      jahia-net:
+        ipv4_address: 172.24.24.100
+  jahia:
+    image: jahia/jahia-ee:8.1.2.1
+    container_name: jahia
+    ports:
+      - "8080:8080"
+      - "8101:8101"
+      - "8000:8000"
+    depends_on:
+      - mariadb
+    environment:
+      jahia_cfg_karaf_remoteShellHost: 0.0.0.0
+      DB_VENDOR: mariadb
+      DB_HOST: mariadb
+      DB_NAME: jahia
+      DB_USER: jahia
+      DB_PASS: jahia
+      MAX_RAM_PERCENTAGE: 95
+      SUPER_USER_PASSWORD: root1234
+      PROCESSING_SERVER: 'true'
+      EXECUTE_PROVISIONING_SCRIPT: file:///tmp/provisioning.yaml
+    volumes:
+      - ./data/jahia:/var/jahia
+      - ./site1.zip:/tmp/site1.zip
+      - ./provisioning.yaml:/tmp/provisioning.yaml
+    networks:
+      jahia-net:
+        ipv4_address: 172.24.24.50
 
 
-    haproxy:
-        image: haproxytech/haproxy-alpine:2.4
-        hostname: haproxy.jahia.net
-        container_name: haproxy
-        ports:
-            - "18080:8080"
-            - "18404:8404"
-        volumes:
-            - './:/usr/local/etc/haproxy:ro'
-        networks:
-            -  jahia-net
+  haproxy:
+    image: haproxytech/haproxy-alpine:2.4
+    container_name: haproxy
+    ports:
+      - "18080:8080"
+      - "18404:8404"
+    volumes:
+      - ./:/usr/local/etc/haproxy
+    networks:
+      - jahia-net
+
+networks:
+  jahia-net:
+    ipam:
+        driver: default
+        config:
+            - subnet: "172.24.24.0/24"
