@@ -1,9 +1,9 @@
 - addMavenRepository: 'https://store.jahia.com/nexus/content/repositories/jahia-public-app-store@id=JahiaStore'
-- installBundle:
-    - 'mvn:org.jahia.modules/jexperience/2.3.1'
-    - 'mvn:org.jahiacommunity.modules/bootstrap5-core/2.1.2'
-    - 'mvn:org.jahiacommunity.modules/bootstrap5-components/2.1.2'
-    - 'mvn:org.jahiacommunity.modules/bootstrap5-templates-starter/2.1.2'
+- installOrUpgradeBundle:
+    - url: 'mvn:org.jahia.modules/jexperience/2.4.0'
+    - url: 'mvn:org.jahiacommunity.modules/bootstrap5-core/2.1.6'
+    - url: 'mvn:org.jahiacommunity.modules/bootstrap5-components/2.1.6'
+    - url: 'mvn:org.jahiacommunity.modules/bootstrap5-templates-starter/2.1.6'
   autoStart: true
   uninstallPreviousVersion: true
 
